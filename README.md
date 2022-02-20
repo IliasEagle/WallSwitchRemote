@@ -20,3 +20,6 @@ This project contains the .yaml file for ESPHome for a Gosund-SW9 smart switch t
 - Turn on both buttons' LEDs on boot
 - Close relay-2 on boot
 - Set Switch-Cnfg to the ON state on boot
+
+## Home Assistant exposed entities
+![image](https://user-images.githubusercontent.com/93916516/154858345-004481cc-db22-41d6-b712-bb2e7347887e.png)
