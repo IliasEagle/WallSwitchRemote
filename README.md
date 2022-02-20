@@ -11,3 +11,12 @@ After installing smart bulbs (e.g. HUE or IKEA smart bulbs) which are controlled
 ## Proposed Solution
 Use a smart switch where the button press action is not linked to the the relay control.
 
+## Solution implementation
+This project contains the .yaml file for ESPHome for a Gosund-SW9 smart switch that supports the following functionalities:
+- Switch-1 and Switch-2 to control each relay _(exposed to home asssistant)_
+- Switch-Cngf used as a configuration to enable/disable the control of relay-2 by a short press on the mechanical button-2 _(exposed to home asssistant)_
+- Short Press, Long Press, Double Press and Press and Hold actions for both mechanical switches
+- The "Press and Hold" action on the mechanical button-1 will toggle the Switch-Cnfg and flash the Button-2 LED for confiramtion
+- Turn on both buttons' LEDs on boot
+- Close relay-2 on boot
+- Set Switch-Cnfg to the ON state on boot
