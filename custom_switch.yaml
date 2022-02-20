@@ -1,0 +1,241 @@
+substitutions:
+  long_devicename: Device Name # Replace this with your preferred name
+
+esphome:
+  name: your_device name # Replace this with what ever name you chose for your device
+  on_boot:
+    then:
+      - light.turn_on: light_1
+      - light.turn_on: light_2
+      - switch.turn_on: relay_2
+      - switch.turn_on: relay_ctrl_cnfg
+
+esp8266:
+  board: esp01_1m
+
+# Replace the following section with what 
+# ==========================================
+# # Enable logging
+# logger:
+# 
+# # Enable Home Assistant API
+# api:
+# 
+# ota:
+#   password: "xxxxxxxxxxxxxxx"
+# 
+# wifi:
+#   ssid: !secret wifi_ssid
+#   password: !secret wifi_password
+# 
+#   # Enable fallback hotspot (captive portal) in case wifi connection fails
+#   ap:
+#     ssid: "xxxxx"
+#     password: "xxxxx"
+#============================================
+
+captive_portal:
+
+# Creates a web server which you can use 
+# to access your switch via its IP
+web_server:
+  port: 80
+  
+   
+binary_sensor:
+  - platform: gpio
+    internal: true
+    pin:
+      number: GPIO00
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "$long_devicename Press 1"
+    icon: mdi:gesture-tap
+    on_multi_Press:
+    - timing:
+      - ON for at most 0.35s
+      - OFF for at least 0.15s
+      then:
+        - logger.log: "Single Short Press"
+        - homeassistant.event:
+            event: esphome.button_1_press
+            data:
+              title: short_press
+    - timing:
+      - ON for 0.35s to 1.5s
+      - OFF for at least 0.5s
+      then:
+        - logger.log: "Single Long Press"
+        - homeassistant.event:
+            event: esphome.button_1_press
+            data:
+              title: long_press
+    - timing:
+      - ON for at most 0.35s
+      - OFF for at most 0.15s
+      - ON for at most 0.35s
+      - OFF for at least 0.5s
+      then:
+        - logger.log: "Double Press"
+        - homeassistant.event:
+            event: esphome.button_1_press
+            data:
+              title: double_press
+    - timing:
+      - ON for at least 2.2s
+      then:
+        - logger.log: "Press and Hold"
+        - switch.toggle: relay_ctrl_cnfg
+        - homeassistant.event:
+            event: esphome.button_1_press
+            data:
+              title: hold_press
+        - if:
+            condition:
+              light.is_on: light_2
+            then:
+              - repeat:
+                  count: 3
+                  then:
+                    - light.turn_off: light_2
+                    - delay: 0.25s
+                    - light.turn_on: light_2
+                    - delay: 0.25s
+            else:
+              - repeat:
+                  count: 3
+                  then:
+                    - light.turn_on: light_2
+                    - delay: 0.25s
+                    - light.turn_off: light_2
+                    - delay: 0.25s
+    
+  - platform: gpio
+    internal: true
+    pin:
+      number: GPIO05
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "$long_devicename Press 2"
+    icon: mdi:gesture-tap
+    on_multi_Press:
+    - timing:
+      - ON for at most 0.35s
+      - OFF for at least 0.15s
+      then:
+        - logger.log: "Single Short Press"
+        - homeassistant.event:
+            event: esphome.button_2_press
+            data:
+              title: short_press
+        - if:
+            condition: 
+              switch.is_on: relay_ctrl_cnfg
+            then:
+              - switch.toggle: relay_2
+            
+    - timing:
+      - ON for 0.5s to 1.5s
+      - OFF for at least 0.5s
+      then:
+        - logger.log: "Single Long Press"
+        - homeassistant.event:
+            event: esphome.button_2_press
+            data:
+              title: long_press
+    - timing:
+      - ON for at most 0.35s
+      - OFF for at most 0.15s
+      - ON for at most 0.35s
+      - OFF for at least 0.5s
+      then:
+        - logger.log: "Double Press"
+        - homeassistant.event:
+            event: esphome.button_2_press
+            data:
+              title: double_press
+    - timing:
+      - ON for at least 2.2s
+      then:
+        - logger.log: "Press and Hold"
+        - homeassistant.event:
+            event: esphome.button_2_press
+            data:
+              title: hold_press
+        - if:
+            condition: 
+              switch.is_off: relay_ctrl_cnfg
+            then:
+              - switch.toggle: relay_2
+    
+switch:
+  # Configuration parameter to couple/decouple relay from state
+  - platform: template
+    internal: false
+    name: "$long_devicename Direct Relay-2 Control"
+    id: relay_ctrl_cnfg
+    optimistic: true
+    entity_category: config
+    icon: mdi:cog-outline
+    restore_state: true
+    on_turn_off:
+      - switch.turn_on: relay_2
+    
+  # GPIO pin to control relay1
+  - platform: gpio
+    internal: false
+    name: "$long_devicename Relay 1"
+    id: relay_1
+    pin: GPIO14
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:electric-switch
+    entity_category: ''
+    
+  # GPIO pin to control relay 2
+  - platform: gpio
+    internal: false
+    name: "$long_devicename Relay 2"
+    id: relay_2
+    pin: GPIO12
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: mdi:electric-switch
+    entity_category: ''
+    
+    # LED that shows the Wemos D1 status
+light:
+  - platform: status_led
+    name: "$long_devicename state"
+    internal: false
+    pin:
+      number: GPIO13
+      inverted: true
+    entity_category: diagnostic
+    
+  # Switch status 1 LED
+  - platform: binary
+    id: light_1
+    name: "$long_devicename LED 1"
+    icon: mdi:led-on
+    internal: false
+    output: led_1
+    entity_category: diagnostic
+    
+  # Switch status 2 LED
+  - platform: binary
+    id: light_2
+    name: "$long_devicename LED 2"
+    icon: mdi:led-on
+    internal: false
+    output: led_2
+    entity_category: diagnostic
+
+output:
+  - id: led_1
+    platform: gpio
+    pin: GPIO02
+    inverted: true
+    
+  - id: led_2
+    platform: gpio
+    pin: GPIO04
+    inverted: true
